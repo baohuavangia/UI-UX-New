@@ -1,0 +1,241 @@
+﻿@page "/product-detail-admin/{productId:int}"
+
+
+@using MenShopBlazor.Services.Product
+@using MenShopBlazor.DTOs.Product.ViewModel
+@using MenShopBlazor.Shared;
+@using MenShopBlazor.Services.UploadImage;
+@inject IProductService ProductService
+@inject IUpImg ImageService
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+
+    <MudOverlay Visible="_loading" DarkBackground="true" Fixed="true" ZIndex="1300">
+        <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
+    </MudOverlay>
+    @if (!_loading)
+{
+<MudContainer Class="mt-5 px-8" MaxWidth="MaxWidth.False">
+<MudBreadcrumbs Items="_items"></MudBreadcrumbs>
+    <MudGrid>
+        <MudItem xs="12">
+            <MudDataGrid T="ProductDetailViewModel"
+                         Items="@productDetails"
+                         Filterable="true"
+                         Dense="true"
+                         FilterMode="DataGridFilterMode.ColumnFilterRow">
+                <Columns>
+                    <PropertyColumn Property="x => x.DetailId" Title="MÃ CHI TIẾT" />
+                    <PropertyColumn Property="x => x.SizeName" Title="SIZE" />
+                    <PropertyColumn Property="x => x.ColorName" Title="MÀU" />
+                    <PropertyColumn Property="x => x.FabricName" Title="CHẤT LIỆU" />
+                    <TemplateColumn Title="GIÁ NHẬP">
+                        <CellTemplate>
+                            @if (context.Item.InputPrice.HasValue)
+                            {
+                                @string.Format("{0:N0} ₫", context.Item.InputPrice)
+                            }
+                            else
+                            {
+                                <MudIconButton Icon="@Icons.Material.Filled.CloudSync" Color="Color.Warning" />
+                            }
+                        </CellTemplate>
+
+                    </TemplateColumn>
+
+                    <TemplateColumn Title="GIÁ BÁN">
+                        <CellTemplate>
+                            @if (context.Item.SellPrice.HasValue)
+                            {
+                                    @string.Format("{0:N0} ₫", context.Item.SellPrice)
+                            }
+                            else
+                            {
+                                <MudIconButton Icon="@Icons.Material.Filled.CloudSync" Color="Color.Warning" />
+                            }
+                        </CellTemplate>
+                    </TemplateColumn>
+
+                    <TemplateColumn Title="NGÀY CẬP NHẬT">
+                        <CellTemplate>
+                            @if (context.Item.LatestPriceDate.HasValue)
+                            {
+                                @context.Item.LatestPriceDate.Value.ToString("dd/MM/yyyy HH:mm")
+                            }
+                            else
+                            {
+                                <MudIconButton Icon="@Icons.Material.Filled.CloudSync" Color="Color.Warning" />
+                            }
+                        </CellTemplate>
+                    </TemplateColumn>
+
+
+                    <TemplateColumn Title="ẢNH">
+                        <CellTemplate>
+                            @{
+                                var detailId = context.Item.DetailId;
+                                var imgSrc = context.Item.Images?.FirstOrDefault() ?? "imgs/noImg.jpeg";
+                            }
+
+                            <MudImage src="@imgSrc"
+                                 @onclick="() => OpenImageModal(detailId)"
+                                 class="img-hover"
+                                 style="width: 100px; height: 80px; object-fit: cover; cursor: pointer; border-radius: 4px;" />
+                        </CellTemplate>
+                    </TemplateColumn>
+
+                    <TemplateColumn Title="TÙY CHỈNH" TextAlign="DataGridColumnAlign.Right">
+                        <CellTemplate>
+                            <MudStack Row>
+                                <MudButton StartIcon="@Icons.Material.Outlined.Edit"
+                                           Size="Size.Small"
+                                           Color="Color.Primary"
+                                           OnClick="@(() => OpenEditDialog(context.Item))">
+                                    Sửa
+                                </MudButton>
+                                <MudButton StartIcon="@Icons.Material.Outlined.Delete"
+                                           Size="Size.Small"
+                                           Color="Color.Error"
+                                           Class="ml-2"
+                                           OnClick="@(() => DeleteDetailProduct(context.Item.DetailId))">
+                                    Xoá
+                                </MudButton>
+                            </MudStack>
+                        </CellTemplate>
+                    </TemplateColumn>
+                </Columns>
+
+                <PagerContent>
+                    <MudDataGridPager T="ProductDetailViewModel" />
+                </PagerContent>
+            </MudDataGrid>
+
+            <MudButton Color="Color.Primary" Variant="Variant.Outlined"
+                       StartIcon="@Icons.Material.Filled.Add"
+                       Class="mt-3"
+                       OnClick="@(() => OpenCreateDialog(ProductId))">
+                Thêm chi tiết
+            </MudButton>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+}
+
+@code {
+    private List<BreadcrumbItem> _items = new();
+    [Parameter] public int ProductId { get; set; }
+    private IEnumerable<ProductDetailViewModel> productDetails = new List<ProductDetailViewModel>();
+    private string productName = "Đang tải...";
+    private bool _loading = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var product = await ProductService.GetProductByIdAsync(ProductId);
+        productName = product?.ProductName ?? $"ID: {ProductId}";   
+        _items = new()
+        {
+            new BreadcrumbItem("Trang chủ", href: "/", icon: Icons.Material.Filled.Home),
+            new BreadcrumbItem("Sản phẩm", href: "/list-product-admin", icon: Icons.Material.Filled.List),
+            new($"Chi tiết: {productName}", href: null, disabled: true, icon: Icons.Material.Filled.Info)
+        };
+        await LoadProductDetailsAsync();
+    }
+    private async Task LoadProductDetailsAsync()
+    {
+        _loading = true;
+        StateHasChanged();
+
+        var loadTask = ProductService.GetProductDetailsAsync(ProductId);
+
+        var delayTask = Task.Delay(1000);
+        await Task.WhenAll(loadTask, delayTask);
+
+        productDetails = loadTask.Result;
+
+        _loading = false;
+        StateHasChanged();
+    }
+
+
+    private async Task OpenImageModal(int detailId)
+    {
+        var images = await ProductService.GetImageProductDetailsAsync(detailId);
+
+        var parameters = new DialogParameters
+    {
+        { "DetailId", detailId },
+        { "Images", images?.ToList() ?? new List<ImageProductViewModel>() },
+        { "OnImagesSaved", EventCallback.Factory.Create(this, async () =>
+            {
+                await LoadProductDetailsAsync();
+            })
+        }
+    };
+
+        var options = new DialogOptions
+            {
+                MaxWidth = MaxWidth.Medium,
+                FullWidth = true,
+                CloseButton = true
+            };
+
+        DialogService.Show<ImageCarouselDialog>("ẢNH CHI TIẾT SẢN PHẨM", parameters, options);
+    }
+
+
+
+    private async Task DeleteDetailProduct(int id)
+    {
+        var parameters = new DialogParameters
+        {
+            { "ContentText", $"Bạn có chắc muốn xoá chi tiết sản phẩm có ID = {id} không?" },
+            { "ButtonText", "Xoá" },
+            { "Color", Color.Error }
+        };
+
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
+        var dialog = DialogService.Show<ConfirmDeleteDialog>("Xác nhận xoá", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            var response = await ProductService.DeleteProductDetailAsync(id);
+            await LoadProductDetailsAsync();
+
+            if (response.IsSuccess)
+                Snackbar.Add(response.Message, Severity.Success);
+            else
+                Snackbar.Add(response.Message, Severity.Error);
+        }
+    }
+
+    private async Task OpenEditDialog(ProductDetailViewModel productDetail)
+    {
+        var parameters = new DialogParameters { ["Detail"] = productDetail };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+
+        var dialog = DialogService.Show<EditProductDetailDiaLog>("CHỈNH SỬA CHI TIẾT SẢN PHẨM", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadProductDetailsAsync();
+            Snackbar.Add("Cập nhật thành công", Severity.Success);
+        }
+    }
+
+    private async Task OpenCreateDialog(int productId)
+    {
+        var parameters = new DialogParameters { { "ProductId", productId } };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+        var dialog = DialogService.Show<CreateProductDetailDialog>("TẠO CHI TIẾT SẢN PHẨM", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadProductDetailsAsync();
+        }
+    }
+}
+

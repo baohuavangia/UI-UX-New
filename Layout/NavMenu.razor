@@ -1,0 +1,32 @@
+﻿<MudPaper Width="250px" Elevation="0" Class="py-3">
+    <MudNavMenu Color="Color.Info">
+        <MudNavLink Typo="Typo.h2" Href="/list-category" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Category">Quản Lý Danh Mục</MudNavLink>
+        <MudNavGroup Title="Quản Lý Sản Phẩm" Expanded="true" Icon="@Icons.Material.Filled.ListAlt">
+            <MudNavLink Href="/list-product-admin" Match="NavLinkMatch.Prefix">Danh Sách Sản Phẩm</MudNavLink>
+        </MudNavGroup>
+        <MudNavGroup Title="Quản Lý Hóa Đơn" Expanded="true">
+            <MudNavLink Href="/users" Match="NavLinkMatch.Prefix">Danh Sách Hóa Đơn</MudNavLink>
+            <MudNavLink Href="/create-order" Match="NavLinkMatch.Prefix">Tạo Hóa Đơn</MudNavLink>
+        </MudNavGroup>
+        <MudNavGroup Title="Thuộc Tính Sản Phẩm" Expanded="true">
+            <MudNavLink Href="/list-color" Match="NavLinkMatch.Prefix">Danh Sách Màu</MudNavLink>
+            <MudNavLink Href="/list-fabric" Match="NavLinkMatch.Prefix">Danh Sách Chất Liệu</MudNavLink>
+            <MudNavLink Href="/list-size" Match="NavLinkMatch.Prefix">Danh Sách Kích Cở</MudNavLink>
+        </MudNavGroup>
+        <MudNavGroup Title="Quản Lý Người Dùng" Expanded="true" Icon="@Icons.Material.Filled.ListAlt">
+            <MudNavLink Href="/list-user" Match="NavLinkMatch.Prefix">Danh Sách Người Dùng</MudNavLink>
+        </MudNavGroup>
+        <MudNavGroup Title="Quản Lý Chi Nhánh" Expanded="true" Icon="@Icons.Material.Filled.ListAlt">
+            <MudNavLink Href="/list-branches" Match="NavLinkMatch.Prefix">Danh Sách Chi Nhánh</MudNavLink>
+            <MudNavLink Href="/branch-products" Match="NavLinkMatch.Prefix">Sản Phẩm Chi Nhánh</MudNavLink>
+        </MudNavGroup>
+        <MudNavGroup Title="Quản Lý Phiếu Nhập-Xuất" Expanded="true" Icon="@Icons.Material.Filled.ListAlt">
+            <MudNavLink Href="/list-inputreceipts" Match="NavLinkMatch.Prefix">Danh Sách Phiếu Nhập</MudNavLink>
+            <MudNavLink Href="/list-outputreceipts" Match="NavLinkMatch.Prefix">Sản Phẩm Phiếu Xuất</MudNavLink>
+        </MudNavGroup>
+        <MudNavGroup Title="Quản Lý Kho Hàng" Expanded="true" Icon="@Icons.Material.Filled.ListAlt">
+            <MudNavLink Href="/Storage" Match="NavLinkMatch.Prefix">Kho Hàng</MudNavLink>
+            <MudNavLink Href="/Collection" Match="NavLinkMatch.Prefix">Bộ sưu tập</MudNavLink>
+        </MudNavGroup>
+    </MudNavMenu>
+</MudPaper>

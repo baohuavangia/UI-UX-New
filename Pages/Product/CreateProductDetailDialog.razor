@@ -1,0 +1,227 @@
+﻿@using MenShopBlazor.Services.Product
+@using MenShopBlazor.DTOs.Product
+@using MenShopBlazor.DTOs.Product.ReponseDTO
+@using MenShopBlazor.DTOs
+@using MenShopBlazor.Services.Color;
+@using MenShopBlazor.Services.Fabric;
+@using MenShopBlazor.Services.Size;
+@using MenShopBlazor.DTOs.Color
+@using MenShopBlazor.DTOs.Size
+@using MenShopBlazor.DTOs.Fabric
+@using MenShopBlazor.DTOs.Product.ViewModel
+@inject IProductService ProductService
+@inject ISnackbar Snackbar
+@inject IColorService ColorService
+@inject IFabricService FabricService
+@inject ISizeService SizeService
+
+<MudDialog>
+    <DialogContent>
+        <MudText Typo="Typo.h6">Thêm chi tiết sản phẩm</MudText>
+
+        <MudGrid Class="mb-2">
+            <MudItem xs="12" sm="7">
+                <MudPaper Class="pa-4">
+                    <MudAutocomplete T="SizeDTO"
+                                     Label="Size"
+                                     @bind-Value="selectedSize"
+                                     ToStringFunc="@(s => s?.Name)"
+                                     SearchFunc="SearchSizeAutocomplete"
+                                     Required="true" />
+
+                    <MudAutocomplete T="ColorDTO"
+                                     Label="Màu sắc"
+                                     @bind-Value="selectedColor"
+                                     ToStringFunc="@(c => c?.Name)"
+                                     SearchFunc="SearchColorsAutocomplete"
+                                     Required="true"
+                                     Class="mt-3" />
+
+                    <MudAutocomplete T="FabricDTO"
+                                     Label="Chất liệu"
+                                     @bind-Value="selectedFabric"
+                                     ToStringFunc="@(f => f?.Name)"
+                                     SearchFunc="SearchFabricsAutocomplete"
+                                     Required="true"
+                                     Class="mt-3" />
+
+
+
+                    <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="AddDetailToList" Class="mt-4">
+                        Thêm vào danh sách
+                    </MudButton>
+                </MudPaper>
+            </MudItem>
+
+            <MudItem xs="12" sm="5">
+                <MudPaper Class="pa-4 mud-height-full">
+                    <MudText Typo="Typo.subtitle2">Danh sách chi tiết đã thêm</MudText>
+                    @if (tempDetails.Count == 0)
+                    {
+                        <MudText Typo="Typo.body2">Chưa có chi tiết nào được thêm.</MudText>
+                    }
+                    else
+                    {
+                        <MudTable Items="@tempDetails">
+                            <HeaderContent>
+                                <MudTh>Size</MudTh>
+                                <MudTh>Màu</MudTh>
+                                <MudTh>Chất liệu</MudTh>
+                                <MudTh></MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd>@GetSizeName(context.SizeId)</MudTd>
+                                <MudTd>@GetColorName(context.ColorId)</MudTd>
+                                <MudTd>@GetFabricName(context.FabricId)</MudTd>
+                                <MudTd>
+                                    <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                    Color="Color.Error"
+                                    OnClick="@(() => RemoveDetail(context))" />
+                                </MudTd>
+                            </RowTemplate>
+                        </MudTable>
+
+                    }
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+
+    <DialogActions>
+            <MudButton Color="Color.Success" OnClick="SaveAllDetails" Disabled="@(tempDetails.Count == 0)">Lưu tất cả</MudButton>
+            <MudButton OnClick="Cancel">Hủy</MudButton>
+    </DialogActions>
+</MudDialog>
+
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; }
+    [Parameter] public int ProductId { get; set; }
+
+    private int selectedSizeId;
+    private int selectedColorId;
+    private int selectedFabricId;
+    private SizeDTO selectedSize;
+    private ColorDTO selectedColor;
+    private FabricDTO selectedFabric;
+
+
+
+    private IEnumerable<SizeDTO> sizes = new List<SizeDTO>();
+    private IEnumerable<ColorDTO> colors = new List<ColorDTO>();
+    private IEnumerable<FabricDTO> fabrics = new List<FabricDTO>();
+
+    private List<ProductDetailItemDTO> tempDetails = new();
+    private AddProductDetailDTO newDetail = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        newDetail.ProductId = ProductId;
+
+        sizes = await SizeService.GetSizeAsync();
+        colors = await ColorService.GetColorDtos();
+        fabrics = await FabricService.GetFabricDtos();
+    }
+
+    private async Task SaveAllDetails()
+    {
+        Console.WriteLine($"ProductId cần gửi: {newDetail.ProductId}");
+        newDetail.ProductId = ProductId;
+        newDetail.Details = tempDetails;
+        var response = await ProductService.AddProductDetailsAsync(newDetail);
+
+        foreach (var item in response.Results)
+        {
+            var detailText = $"Size: {GetSizeName(item.Detail.SizeId)}, Color: {GetColorName(item.Detail.ColorId)}, Fabric: {GetFabricName(item.Detail.FabricId)}";
+
+            if (item.IsSuccess)
+            {
+                Snackbar.Add($"{detailText} - {item.Message}", Severity.Success);
+                MudDialog.Close(DialogResult.Ok(true));    
+            }
+            else
+            {
+                Snackbar.Add($"{detailText} - {item.Message}", Severity.Error);
+            }
+            tempDetails.Clear();
+            StateHasChanged();
+        }
+
+    }
+
+    private void RemoveDetail(ProductDetailItemDTO item)
+    {
+        tempDetails.Remove(item);
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+    private Task<IEnumerable<SizeDTO>> SearchSizeAutocomplete(string value, CancellationToken token)
+    {
+        IEnumerable<SizeDTO> result;
+        if (string.IsNullOrWhiteSpace(value))
+            result = sizes;
+        else
+            result = sizes.Where(x => x.Name.Contains(value, StringComparison.OrdinalIgnoreCase));
+
+        return Task.FromResult(result);
+    }
+
+    private Task<IEnumerable<ColorDTO>> SearchColorsAutocomplete(string value, CancellationToken token)
+    {
+        IEnumerable<ColorDTO> result;
+        if (string.IsNullOrWhiteSpace(value))
+            result = colors;
+        else
+            result = colors.Where(x => x.Name.Contains(value, StringComparison.OrdinalIgnoreCase));
+
+        return Task.FromResult(result);
+    }
+
+    private Task<IEnumerable<FabricDTO>> SearchFabricsAutocomplete(string value, CancellationToken token)
+    {
+        IEnumerable<FabricDTO> result;
+        if (string.IsNullOrWhiteSpace(value))
+            result = fabrics;
+        else
+            result = fabrics.Where(x => x.Name.Contains(value, StringComparison.OrdinalIgnoreCase));
+
+        return Task.FromResult(result);
+    }
+
+
+
+
+    private void AddDetailToList()
+    {
+        if (selectedSize == null || selectedColor == null || selectedFabric == null)
+        {
+            Snackbar.Add("Vui lòng chọn đầy đủ Size, Màu và Chất liệu", Severity.Warning);
+            return;
+        }
+
+        if (tempDetails.Any(d => d.SizeId == selectedSize.SizeId && d.ColorId == selectedColor.ColorId && d.FabricId == selectedFabric.FabricId))
+        {
+            Snackbar.Add("Chi tiết này đã được thêm trước đó", Severity.Warning);
+            return;
+        }
+
+        tempDetails.Add(new ProductDetailItemDTO
+            {
+                SizeId = selectedSize.SizeId,
+                ColorId = selectedColor.ColorId,
+                FabricId = selectedFabric.FabricId
+            });
+
+        selectedSize = null;
+        selectedColor = null;
+        selectedFabric = null;
+    }
+    private string GetSizeName(int id) => sizes.FirstOrDefault(s => s.SizeId == id)?.Name ?? "N/A";
+    private string GetColorName(int id) => colors.FirstOrDefault(c => c.ColorId == id)?.Name ?? "N/A";
+    private string GetFabricName(int id) => fabrics.FirstOrDefault(f => f.FabricId == id)?.Name ?? "N/A";
+
+
+}

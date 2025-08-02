@@ -1,0 +1,229 @@
+﻿@page "/list-inputreceipts"
+@inject IInputReceiptService ReceiptService
+@inherits LayoutComponentBase
+@inject IDialogService DialogService
+@inject NavigationManager Navigation
+@using MenShopBlazor.DTOs.Receipt.InputReceipt
+@using MenShopBlazor.DTOs.Product.ViewModel
+@using MenShopBlazor.Services.InputReceiptService
+@using DTOs
+@if (isLoading)
+{
+    <BlazorBootstrap.Spinner Color="SpinnerColor.Primary" />
+}
+else
+{
+
+    <MudContainer Class="mt-5 px-8" MaxWidth="MaxWidth.False">
+    <MudBreadcrumbs Items="_items"></MudBreadcrumbs>
+
+            <MudDataGrid T="RowItem"
+                 Items="rowItems"
+                 Dense="true"
+                 Filterable="true"
+                 Hover="true"
+                 RowsPerPage="10"
+                 FilterMode="DataGridFilterMode.ColumnFilterRow"
+                 @bind-SelectedItem="selectedItem">
+
+        <Columns>
+            <PropertyColumn Property="x => x.rowItem.ReceiptId" Filterable="false" Title="Mã Phiếu Nhập" />
+            <PropertyColumn Property="x => x.rowItem.ManagerName" Filterable="false" Title="Quản lý" />
+            <PropertyColumn Property="x => x.rowItem.CreatedDate" Title="Ngày Tạo" />
+            <PropertyColumn Property="x => x.rowItem.ConfirmedDate" Title="Ngày Xác Nhận" />
+            <PropertyColumn Property="x => x.rowItem.CancelDate" Title="Ngày Hủy" />
+            <PropertyColumn Property="x => x.rowItem.StorageName" Filterable="false" Title="Kho hàng" />
+            <PropertyColumn Property="x => x.rowItem.Status" Filterable="false" Title="Trạng thái" />
+            <PropertyColumn Property="x => x.rowItem.Total" Filterable="false" Title="Tổng" />
+
+            <TemplateColumn Title="Chi tiết | Hủy | Xác nhận" TextAlign="DataGridColumnAlign.Right">
+                <CellTemplate>
+                    <MudStack Row>
+                        <MudButton StartIcon="@Icons.Material.Filled.DataSaverOn"
+                                   Size="Size.Small"
+                                   Color="Color.Tertiary"
+                                   Class="ml-2"
+                                   OnClick="@(() => GoToDetailPage(context.Item.rowItem.ReceiptId))">
+                            Chi tiết
+                        </MudButton>
+
+                        @if (context.Item.rowItem.Status != "Cancelled" && context.Item.rowItem.Status != "Completed")
+                        {
+                            <MudButton StartIcon="@Icons.Material.Outlined.Delete"
+                                       Size="Size.Small"
+                                       Color="Color.Error"
+                                       Class="ml-2"
+                                       OnClick="@(() => ShowCancelDialog(context.Item))">
+                                Huỷ
+                            </MudButton>
+
+                            <MudButton  StartIcon="@Icons.Material.Filled.Check"
+                                       Size="Size.Small"
+                                       Color="Color.Success"
+                                       Class="ml-2"
+                                       OnClick="@(() => ShowConfirmDialog(context.Item))">
+                                Xác nhận
+                            </MudButton>
+                        }
+                    </MudStack>
+                </CellTemplate>
+            </TemplateColumn>
+        </Columns>
+
+        <PagerContent>
+            <MudDataGridPager T="RowItem" />
+        </PagerContent>
+    </MudDataGrid>    
+            <MudButton Color="Color.Primary" Variant="Variant.Outlined"
+                   OnClick="OpenCreateDialog" StartIcon="@Icons.Material.Filled.Add" Class="mt-2 mb-3">
+            Thêm sản phẩm
+        </MudButton>
+        <MudDialog @ref="cancelDialogRef" MaxWidth="MaxWidth.Small">
+            <DialogContent>
+                <MudText Typo="Typo.h6">Bạn có chắc chắn muốn <b>huỷ</b> phiếu nhập <strong>@selectedItem?.rowItem.ReceiptId</strong>?</MudText>
+            </DialogContent>
+            <DialogActions>
+                <MudButton OnClick="CloseCancelDialog" Color="Color.Secondary">Không</MudButton>
+                <MudButton OnClick="ConfirmCancel" Color="Color.Error">Huỷ phiếu</MudButton>
+            </DialogActions>
+        </MudDialog>
+
+        <MudDialog @ref="confirmDialogRef" MaxWidth="MaxWidth.Small">
+            <DialogContent>
+                <MudText Typo="Typo.h6">Xác nhận phiếu nhập <strong>@selectedItem?.rowItem.ReceiptId</strong>?</MudText>
+            </DialogContent>
+            <DialogActions>
+                <MudButton OnClick="CloseConfirmDialog" Color="Color.Secondary">Không</MudButton>
+                <MudButton OnClick="ConfirmReceipt" Color="Color.Primary">Xác nhận</MudButton>
+            </DialogActions>
+        </MudDialog>
+    </MudContainer>
+
+}
+
+
+@code
+{
+    private bool isLoading = true;
+    IEnumerable<InputReceiptDTO> listReceipts = [];
+    List<RowItem> rowItems = [];
+    private RowItem? selectedItem;
+    private string searchString1 = "";
+
+    private HashSet<RowItem> selectedItems = new HashSet<RowItem>();
+
+    private IEnumerable<RowItem> Elements = new List<RowItem>();
+    private bool FilterFunc1(RowItem element) => FilterFunc(element, searchString1);
+
+    private bool FilterFunc(RowItem element, string searchString)
+    {
+        if (string.IsNullOrWhiteSpace(searchString))
+            return true;
+
+        var receipt = element.rowItem;
+
+        if (receipt.Status?.Contains(searchString, StringComparison.OrdinalIgnoreCase) == true)
+            return true;
+
+        if (receipt.ReceiptId.ToString().Contains(searchString))
+            return true;
+
+        if (receipt.CreatedDate.ToString().Contains(searchString))
+            return true;
+
+        if (receipt.ConfirmedDate.ToString().Contains(searchString))
+            return true;
+
+        if (receipt.CancelDate.ToString().Contains(searchString))
+            return true;
+
+        if (receipt.ManagerName.ToString().Contains(searchString))
+            return true;
+
+        if (receipt.StorageName.ToString().Contains(searchString))
+            return true;
+
+
+        return false;
+    }
+    private MudDialog? cancelDialogRef;
+    private MudDialog? confirmDialogRef;
+    private List<BreadcrumbItem> _items = new();
+
+    private void GoToDetailPage(int ReceiptId)
+    {
+        Navigation.NavigateTo($"/inputreceipt-detail/{ReceiptId}");
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        _items = new()
+        {
+            new BreadcrumbItem("Trang chủ", href: "/", icon: Icons.Material.Filled.Home),
+            new BreadcrumbItem("Phiếu nhập", href: null,disabled:true, icon: Icons.Material.Filled.List),
+        };
+        await ReloadData();
+    }
+    private void ShowCancelDialog(RowItem item)
+    {
+        selectedItem = item;
+        cancelDialogRef.ShowAsync();
+    }
+
+    private void ShowConfirmDialog(RowItem item)
+    {
+        selectedItem = item;
+        confirmDialogRef.ShowAsync();
+    }
+
+    private void CloseCancelDialog() => cancelDialogRef.CloseAsync();
+    private void CloseConfirmDialog() => confirmDialogRef.CloseAsync();
+
+    private async Task ConfirmCancel()
+    {
+        if (selectedItem is null) return;
+
+        var success = await ReceiptService.CancelReceiptAsync(selectedItem.rowItem.ReceiptId);
+        if (success) await ReloadData();
+
+        cancelDialogRef.CloseAsync();
+    }
+
+    private async Task ConfirmReceipt()
+    {
+        if (selectedItem is null) return;
+
+        var success = await ReceiptService.ConfirmReceiptAsync(selectedItem.rowItem.ReceiptId);
+        if (success) await ReloadData();
+
+        confirmDialogRef.CloseAsync();
+    }
+    private async Task ReloadData()
+    {
+        isLoading = true;
+        listReceipts = await ReceiptService.GetAllInputReceiptsAsync() ?? new();
+        rowItems = listReceipts.Select(r => new RowItem { rowItem = r }).ToList();
+        isLoading = false;
+    }
+    class RowItem
+    {
+        public bool ShowDetail = false;
+        public InputReceiptDTO rowItem {get; set;}
+        public int rowNumber { get; set; }
+    }
+    private void ShowBtnPress(RowItem rowItem)
+    {
+        RowItem item = rowItem;
+        item.ShowDetail = !item.ShowDetail;
+    }
+    private async Task OpenCreateDialog()
+    {
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.ExtraLarge, FullWidth = true };
+        var dialog = DialogService.Show<CreateInputReceipt>("TẠO PHIẾU XUẤT", options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await ReloadData();
+        }
+    }
+}

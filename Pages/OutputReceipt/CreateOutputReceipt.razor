@@ -1,0 +1,325 @@
+﻿@page "/createoutput"
+@using MenShopBlazor.DTOs.Branch
+@using MenShopBlazor.DTOs.Color
+@using MenShopBlazor.DTOs.Fabric
+@using MenShopBlazor.DTOs.Product.ViewModel
+@using MenShopBlazor.DTOs.Receipt.CreateReceipt
+@using MenShopBlazor.DTOs.Size
+@using MenShopBlazor.Services.Branch
+@using MenShopBlazor.Services.Color
+@using MenShopBlazor.Services.Fabric
+@using MenShopBlazor.Services.OutputReceiptService
+@using MenShopBlazor.Services.Product
+@using MenShopBlazor.Services.Size
+@using MenShopBlazor.Wrapper
+@inject IProductService productService
+@inject ISizeService sizeService
+@inject IColorService colorService
+@inject IFabricService fabricService
+@inject IBranchService branchService
+@inject IOutputReceiptService outputReceiptService
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+    <MudText Typo="Typo.h4" Color="Color.Primary" GutterBottom="true">
+        Tạo phiếu xuất kho
+    </MudText>
+    <EditForm Model="@ReceiptLines" OnValidSubmit="HandleSubmit">
+        <MudCard Class="mb-4">
+            <MudCardContent>
+                <MudSelect T="int?"
+                           Label="Chi nhánh"
+                           @bind-Value="SelectedBranchId"
+                           Placeholder="-- Chọn chi nhánh --"
+                           Required="true">
+
+                    @foreach (var b in Branches)
+                    {
+                        <MudSelectItem Value="@((int?)b.BranchId)">@b.Address</MudSelectItem>
+                    }
+                </MudSelect>
+                @foreach (var item in ReceiptLines)
+                {
+                    <MudPaper Class="mt-4 p-3" Elevation="2">
+                        <MudGrid>
+                            <MudItem xs="12" sm="4">
+                                <MudSelect T="int?"
+                                           Label="Sản phẩm"
+                                           Value="item.ProductId"
+                                           ValueChanged="val => OnProductChanged(item, val)"
+                                           Placeholder="-- Chọn sản phẩm --"
+                                           Variant="Variant.Outlined"
+                                           Margin="Margin.Dense">
+                                    @foreach (var p in Products)
+                                    {
+                                        <MudSelectItem T="int?" Value="@((int?)p.ProductId)">@p.ProductName</MudSelectItem>
+                                    }
+                                </MudSelect>
+                            </MudItem>
+
+                            <MudItem xs="12" sm="3">
+                                <MudSelect T="string"
+                                           Label="Chất liệu"
+                                           Value="item.SelectedFabricName"
+                                           ValueChanged="val => OnFabricChanged(item, val)"
+                                           Placeholder="-- Chọn chất liệu --"
+                                           Variant="Variant.Outlined"
+                                           Margin="Margin.Dense">
+                                    @if (item.FabricNames != null)
+                                    {
+                                        @foreach (var name in item.FabricNames)
+                                        {
+                                            <MudSelectItem T="string" Value="@name">@name</MudSelectItem>
+                                        }
+                                    }
+                                </MudSelect>
+                            </MudItem>
+
+                            <MudItem xs="12" sm="2">
+                                <MudSelect T="string"
+                                           Label="Màu"
+                                           Value="item.SelectedColorName"
+                                           ValueChanged="val => OnColorChanged(item, val)"
+                                           Placeholder="-- Chọn sản phẩm --"
+                                           Variant="Variant.Outlined"
+                                           Margin="Margin.Dense">
+                                    @if (item.ColorNames != null)
+                                    {
+                                        @foreach (var name in item.ColorNames)
+                                        {
+                                            <MudSelectItem T="string" Value="@name">@name</MudSelectItem>
+                                        }
+                                    }
+                                </MudSelect>
+                            </MudItem>
+
+                            <MudItem xs="12" sm="2">
+                                <MudSelect T="string"
+                                           Label="Size"
+                                           Value="item.SelectedSizeName"
+                                           ValueChanged="val => OnSizeChanged(item, val)"
+                                           Placeholder="-- Chọn size --"
+                                           Variant="Variant.Outlined"
+                                           Margin="Margin.Dense">
+                                    @if (item.SizeNames != null)
+                                    {
+                                        @foreach (var name in item.SizeNames)
+                                        {
+                                            <MudSelectItem T="string" Value="@name">@name</MudSelectItem>
+                                        }
+                                    }
+                                </MudSelect>
+                            </MudItem>
+
+                            <MudItem xs="6" sm="1">
+                                <MudNumericField T="int?" Label="SL" @bind-Value="item.Quantity" Variant="Variant.Outlined"
+                                                 Margin="Margin.Dense"
+                                                 Min="0" />
+                            </MudItem>
+
+                            <MudItem xs="6" sm="1">
+                                <MudNumericField T="decimal?" Label="Giá" @bind-Value="item.Price" Variant="Variant.Outlined"
+                                                 Margin="Margin.Dense"
+                                                 Min="0"
+                                                 Format="N0" />
+                            </MudItem>
+
+                            <MudItem xs="12" sm="12" Class="d-flex justify-end">
+                                <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="@(() => RemoveLine(item))">
+                                    Xoá dòng
+                                </MudButton>
+                            </MudItem>
+                        </MudGrid>
+                    </MudPaper>
+                }
+
+                <MudStack Row Spacing="3" Class="mt-4">
+                    <MudButton StartIcon="Icons.Material.Filled.Add"
+                               Color="Color.Secondary"
+                               Variant="Variant.Outlined"
+                               OnClick="AddLine">
+                        Thêm dòng
+                    </MudButton>
+
+                    <MudButton StartIcon="Icons.Material.Filled.Save"
+                               Color="Color.Primary"
+                               Variant="Variant.Filled"
+                               ButtonType="MudBlazor.ButtonType.Submit"
+                               Loading="@isSubmitting">
+                        @if (isSubmitting)
+                        {
+                            <text>Đang lưu...</text>
+                        }
+                        else
+                        {
+                            <text>Lưu phiếu nhập</text>
+                        }
+                    </MudButton>
+                </MudStack>
+            </MudCardContent>
+        </MudCard>
+    </EditForm>
+</MudContainer>
+
+@code {
+    private List<ProductViewModel> Products = new();
+    private List<SizeDTO> AllSizes = new();
+    private List<ColorDTO> AllColors = new();
+    private List<FabricDTO> AllFabrics = new();
+    private List<BranchViewModel> Branches = new();
+    private List<ReceiptDetailWrapper> ReceiptLines = new();
+    private int? SelectedBranchId;
+    private bool isSubmitting = false;
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            Products = await productService.GetAllProductsAsync();
+            AllSizes = await sizeService.GetSizeAsync();
+            AllColors = await colorService.GetColorDtos();
+            AllFabrics = await fabricService.GetFabricDtos();
+            var branchResponse = await branchService.GetAllBranchesAsync();
+            Branches = branchResponse?.Data ?? new List<BranchViewModel>();
+            AddLine();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Lỗi khi tải dữ liệu: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private void AddLine() => ReceiptLines.Add(new ReceiptDetailWrapper());
+    private void RemoveLine(ReceiptDetailWrapper item)
+    {
+        if (ReceiptLines.Count > 1)
+        {
+            ReceiptLines.Remove(item);
+        }
+        else
+        {
+            Snackbar.Add("Phải có ít nhất một dòng trong phiếu nhập", Severity.Warning);
+        }
+    }
+
+    private async Task OnProductChanged(ReceiptDetailWrapper item, int? value)
+    {
+        if (value is int productId)
+        {
+            try
+            {
+                item.ProductId = productId;
+                var details = await productService.GetProductDetailsAsync(productId);
+                item.FilteredProductDetails = details;
+                item.FabricNames = details.Select(x => x.FabricName).Distinct().ToList();
+                item.SelectedFabricName = null;
+                item.SelectedColorName = null;
+                item.SelectedSizeName = null;
+                item.ColorNames.Clear();
+                item.SizeNames.Clear();
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Lỗi khi tải chi tiết sản phẩm: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+
+    private void OnFabricChanged(ReceiptDetailWrapper item, string? value)
+    {
+        item.SelectedFabricName = value;
+        item.SelectedColorName = null;
+        item.SelectedSizeName = null;
+        if (!string.IsNullOrEmpty(value))
+        {
+            item.ColorNames = item.FilteredProductDetails
+            .Where(x => x.FabricName == item.SelectedFabricName)
+            .Select(x => x.ColorName)
+            .Distinct().ToList();
+        }
+        else
+        {
+            item.ColorNames = new List<string>();
+        }
+        item.SizeNames = new List<string>();
+    }
+
+    private void OnColorChanged(ReceiptDetailWrapper item, string? value)
+    {
+        item.SelectedColorName = value;
+        item.SelectedSizeName = null;
+        if (!string.IsNullOrEmpty(value))
+        {
+            item.SizeNames = item.FilteredProductDetails
+                .Where(x =>
+                    x.FabricName == item.SelectedFabricName &&
+                    x.ColorName == item.SelectedColorName)
+                .Select(x => x.SizeName)
+                .Distinct()
+                .ToList();
+        }
+        else
+        {
+            item.SizeNames = new List<string>();
+        }
+    }
+
+    private void OnSizeChanged(ReceiptDetailWrapper item, string? value){
+        item.SelectedSizeName = value;
+    }
+    private async Task HandleSubmit()
+    {
+        try
+        {
+            isSubmitting = true;
+            if (!ReceiptLines.Any())
+            {
+                Snackbar.Add("Phiếu nhập phải có ít nhất một dòng", Severity.Warning);
+                return;
+            }
+            var invalidLines = ReceiptLines.Where(x =>
+                !x.ProductId.HasValue ||
+                string.IsNullOrEmpty(x.SelectedFabricName) ||
+                string.IsNullOrEmpty(x.SelectedColorName) ||
+                string.IsNullOrEmpty(x.SelectedSizeName) ||
+                x.Quantity <= 0 ||
+                x.Price <= 0).ToList();
+
+            if (invalidLines.Any())
+            {
+                Snackbar.Add("Vui lòng điền đầy đủ thông tin cho tất cả các dòng", Severity.Warning);
+                return;
+            }
+            
+            var dtoList = ReceiptLines.Select(x => new CreateReceiptDetailDTO
+            {
+                ProductId = x.ProductId,
+                FabricId = AllFabrics.FirstOrDefault(f => f.Name == x.SelectedFabricName)?.FabricId,
+                ColorId = AllColors.FirstOrDefault(c => c.Name == x.SelectedColorName)?.ColorId,
+                SizeId = AllSizes.FirstOrDefault(s => s.Name == x.SelectedSizeName)?.SizeId,
+                Quantity = x.Quantity,
+                Price = x.Price
+            }).ToList();
+
+            string managerId = "manager-001";
+
+            var result = await outputReceiptService.CreateReceiptAsync(dtoList, managerId, SelectedBranchId);
+            if (result.IsSuccess)
+            {
+                Snackbar.Add("Tạo phiếu nhập thành công!", Severity.Success);
+                Navigation.NavigateTo("/list-outputreceipts");
+            }
+            else
+            {
+                Snackbar.Add($"Lỗi: {result.Message}", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Có lỗi xảy ra: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+}

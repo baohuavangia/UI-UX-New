@@ -1,0 +1,138 @@
+﻿@using MenShopBlazor.DTOs.Product.UpdateProduct
+@using MenShopBlazor.DTOs.Product.ViewModel
+@using MenShopBlazor.DTOs.Color
+@using MenShopBlazor.DTOs.Size
+@using MenShopBlazor.DTOs.Fabric
+@using MenShopBlazor.Services.Color;
+@using MenShopBlazor.Services.Fabric;
+@using MenShopBlazor.Services.Size;
+@using MenShopBlazor.DTOs;
+@using MenShopBlazor.Services.Product;
+@inject ISnackbar Snackbar
+@inject IProductService ProductService
+@inject IColorService ColorService
+@inject IFabricService FabricService
+@inject ISizeService SizeService
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">CẬP NHẬT CHI TIẾT SẢN PHẨM</MudText>
+    </TitleContent>
+    <DialogContent>
+
+        <MudAutocomplete T="SizeDTO"
+                         Label="Size"
+                         @bind-Value="selectedSize"
+                         ToStringFunc="s => s?.Name"
+                         SearchFunc="SearchSizes"
+                         Required="true" />
+
+        <MudAutocomplete T="ColorDTO"
+                         Label="Màu sắc"
+                         @bind-Value="selectedColor"
+                         ToStringFunc="c => c?.Name"
+                         SearchFunc="SearchColors"
+                         Required="true" />
+
+        <MudAutocomplete T="FabricDTO"
+                         Label="Chất liệu"
+                         @bind-Value="selectedFabric"
+                         ToStringFunc="f => f?.Name"
+                         SearchFunc="SearchFabrics"
+                         Required="true" />
+
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Secondary" OnClick="@Cancel">Hủy</MudButton>
+        <MudButton Color="Color.Primary" OnClick="@Update">Cập nhật</MudButton>
+    </DialogActions>
+</MudDialog>
+
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; }
+
+    [Parameter] public ProductDetailViewModel Detail { get; set; }
+
+    private UpdateProductDetailDTO _detail = new();
+
+    private List<SizeDTO> sizes = new();
+    private List<ColorDTO> colors = new();
+    private List<FabricDTO> fabrics = new();
+
+    private SizeDTO selectedSize;
+    private ColorDTO selectedColor;
+    private FabricDTO selectedFabric;
+
+    protected override async Task OnInitializedAsync()
+    {
+        sizes = await SizeService.GetSizeAsync();
+        colors = await ColorService.GetColorDtos();
+        fabrics = await FabricService.GetFabricDtos();
+
+        selectedSize = sizes.FirstOrDefault(x => x.Name == Detail.SizeName);
+        selectedColor = colors.FirstOrDefault(x => x.Name == Detail.ColorName);
+        selectedFabric = fabrics.FirstOrDefault(x => x.Name == Detail.FabricName);
+
+        _detail.DetailId = Detail.DetailId;
+
+        if (selectedSize == null || selectedColor == null || selectedFabric == null)
+        {
+            Snackbar.Add("Dữ liệu Size/Màu/Chất liệu không hợp lệ.", Severity.Error);
+            return;
+        }
+    }
+
+    private async Task Update()
+    {
+        if (selectedSize == null || selectedColor == null || selectedFabric == null)
+        {
+            Snackbar.Add("Vui lòng chọn đầy đủ Size, Màu và Chất liệu", Severity.Warning);
+            return;
+        }
+
+        _detail.SizeId = selectedSize.SizeId;
+        _detail.ColorId = selectedColor.ColorId;
+        _detail.FabricId = selectedFabric.FabricId;
+
+        var result = await ProductService.UpdateProductDetailAsync(_detail);
+
+        if (result != null && result.IsSuccess)
+        {
+            Snackbar.Add("Cập nhật chi tiết thành công", Severity.Success);
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        else
+        {
+            Snackbar.Add("Cập nhật thất bại", Severity.Error);
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private Task<IEnumerable<SizeDTO>> SearchSizes(string value, CancellationToken token)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return Task.FromResult(sizes.AsEnumerable());
+        var filtered = sizes.Where(x => x.Name.Contains(value, StringComparison.OrdinalIgnoreCase));
+        return Task.FromResult(filtered);
+    }
+
+    private Task<IEnumerable<ColorDTO>> SearchColors(string value, CancellationToken token)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return Task.FromResult(colors.AsEnumerable());
+        var filtered = colors.Where(x => x.Name.Contains(value, StringComparison.OrdinalIgnoreCase));
+        return Task.FromResult(filtered);
+    }
+
+    private Task<IEnumerable<FabricDTO>> SearchFabrics(string value, CancellationToken token)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return Task.FromResult(fabrics.AsEnumerable());
+        var filtered = fabrics.Where(x => x.Name.Contains(value, StringComparison.OrdinalIgnoreCase));
+        return Task.FromResult(filtered);
+    }
+}
+
+

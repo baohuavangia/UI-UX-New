@@ -1,0 +1,64 @@
+﻿@inject IDialogService DialogService
+@inject ICategoryService CategoryService
+@using MenShopBlazor.Services.Category;
+@using MenShopBlazor.DTOs.Category;
+@inject ISnackbar Snackbar
+
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">CẬP NHẬT DANH MỤC</MudText>
+    </TitleContent> 
+    <DialogContent>
+        <MudTextField @bind-Value="_category.Name" Label="Tên danh mục" FullWidth="true" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Secondary" OnClick="@Cancel">Hủy</MudButton>
+        <MudButton Color="Color.Primary" OnClick="@Update">Cập nhật</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+
+    [Parameter] public CategoryProductViewModel Category { get; set; }
+
+    private CreateUpdateCategoryDTO _category = new();
+
+    protected override void OnInitialized()
+    {
+        _category = new CreateUpdateCategoryDTO
+        {
+            CategoryId = Category.CategoryId,
+            Name = Category.Name
+        };
+    }
+
+    private async Task Update()
+    {
+        if (string.IsNullOrWhiteSpace(_category.Name))
+        {
+            Snackbar.Add("Tên danh mục không được để trống", Severity.Warning);
+            return;
+        }
+
+        var response = await CategoryService.UpdateCategoryAsync(Category.CategoryId,_category);
+
+        if (response.IsSuccess)
+        {
+            MudDialog.Close(DialogResult.Ok(true));
+            Snackbar.Add(response.Message ?? "Cập nhật thành công.", Severity.Success);
+        }
+        else
+        {
+            Snackbar.Add(response.Message ?? "Đã xảy ra lỗi.", Severity.Error);
+        }
+    }
+
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+}
