@@ -115,6 +115,26 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQ29sb3JcTGlzdENvbG9yLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/AlbertBao/Desktop/NEWUIUX/Pages/DiscountPrice/CreateDiscountPrice.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRGlzY291bnRQcmljZVxDcmVhdGVEaXNjb3VudFByaWNlLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/AlbertBao/Desktop/NEWUIUX/Pages/DiscountPrice/CreateDiscountPriceDetail.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRGlzY291bnRQcmljZVxDcmVhdGVEaXNjb3VudFByaWNlRGV0YWlsLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/AlbertBao/Desktop/NEWUIUX/Pages/DiscountPrice/ListDiscountPrice.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRGlzY291bnRQcmljZVxMaXN0RGlzY291bnRQcmljZS5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/AlbertBao/Desktop/NEWUIUX/Pages/DiscountPrice/ListDiscountPriceDetail.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRGlzY291bnRQcmljZVxMaXN0RGlzY291bnRQcmljZURldGFpbC5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/AlbertBao/Desktop/NEWUIUX/Pages/DiscountPrice/UpdateDiscountPrice.razor]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRGlzY291bnRQcmljZVxVcGRhdGVEaXNjb3VudFByaWNlLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/AlbertBao/Desktop/NEWUIUX/Pages/Fabric/CreateFabricDialog.razor]
 build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRmFicmljXENyZWF0ZUZhYnJpY0RpYWxvZy5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 

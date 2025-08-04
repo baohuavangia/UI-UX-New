@@ -71,34 +71,39 @@
     private List<ProductViewModel> productDTOs = new(); 
     private List<ProductViewModel> tempProducts = new();
     private List<CollectionDetailDTO> productDetails = new(); 
+    private List<CollectionDTO> collectionDTOs = new(); // đảm bảo không null
+
     private bool _loading = false;
 
     protected override async Task OnInitializedAsync()
     {
         productDTOs = await ProductService.GetAllProductsAsync();
-        await LoadData();
+        await loadpage();
     }
 
-    private async Task LoadData()
+    private async Task loadpage()
     {
-        _loading = true;
-        StateHasChanged();
-
         try
         {
-            var result = await CollectionService.GetAllCollectionDetailById(collectionId);
-            productDetails = result ?? new();
+            var result = await CollectionService.GetAllCollection();
+            if (result == null || !result.Any())
+            {
+                Console.WriteLine("Không nhận được dữ liệu hoặc danh sách rỗng.");
+            }
+            else
+            {
+                Console.WriteLine($"Số lượng Collection: {result.Count}");
+            }
 
-            Console.WriteLine($"Số lượng sản phẩm đã có trong collection: {productDetails.Count}");
+            collectionDTOs = result ?? new();
         }
         catch (Exception ex)
         {
             Console.WriteLine("Lỗi khi tải dữ liệu: " + ex.Message);
-            productDetails = new();
+            collectionDTOs = new();
         }
 
-        _loading = false;
-        StateHasChanged();
+
     }
 
 
@@ -155,16 +160,18 @@
             if (response.IsSuccess)
             {
                 Snackbar.Add($"✔ {product.ProductName} - {response.Message}", Severity.Success);
+                loadpage();
             }
             else
             {
                 hasError = true;
                 Snackbar.Add($"✘ {product.ProductName} - {response.Message}", Severity.Error);
+                loadpage();
             }
         }
 
         tempProducts.Clear();
-        await LoadData();
+        await loadpage();
 
         if (!hasError)
         {
@@ -175,5 +182,6 @@
     private void Cancel()
     {
         MudDialog.Cancel();
+        loadpage();
     }
 }

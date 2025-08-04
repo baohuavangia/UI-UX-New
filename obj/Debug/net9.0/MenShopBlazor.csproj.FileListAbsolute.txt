@@ -3461,10 +3461,10 @@ C:\Users\AlbertBao\Desktop\NEWUIUX\obj\Debug\net9.0\MenShopBlazor.dll
 C:\Users\AlbertBao\Desktop\NEWUIUX\obj\Debug\net9.0\refint\MenShopBlazor.dll
 C:\Users\AlbertBao\Desktop\NEWUIUX\obj\Debug\net9.0\MenShopBlazor.pdb
 C:\Users\AlbertBao\Desktop\NEWUIUX\obj\Debug\net9.0\ref\MenShopBlazor.dll
-C:\Users\AlbertBao\Desktop\NEWUIUX\bin\Debug\net9.0\wwwroot\_framework\MenShopBlazor.46ijrwpc9k.wasm
-C:\Users\AlbertBao\Desktop\NEWUIUX\bin\Debug\net9.0\wwwroot\_framework\MenShopBlazor.o3ac5v9z4m.pdb
-C:\Users\AlbertBao\Desktop\NEWUIUX\bin\Debug\net9.0\wwwroot\_framework\MenShopBlazor.46ijrwpc9k.wasm.gz
-C:\Users\AlbertBao\Desktop\NEWUIUX\bin\Debug\net9.0\wwwroot\_framework\MenShopBlazor.o3ac5v9z4m.pdb.gz
-C:\Users\AlbertBao\Desktop\NEWUIUX\obj\Debug\net9.0\compressed\la06oqj3s7-46ijrwpc9k.gz
-C:\Users\AlbertBao\Desktop\NEWUIUX\obj\Debug\net9.0\compressed\3jlcbpnv3y-o3ac5v9z4m.gz
-C:\Users\AlbertBao\Desktop\NEWUIUX\obj\Debug\net9.0\compressed\0n6ault2f5-a7e8ln5az4.gz
+C:\Users\AlbertBao\Desktop\NEWUIUX\bin\Debug\net9.0\wwwroot\_framework\MenShopBlazor.f6gdl16gj2.wasm
+C:\Users\AlbertBao\Desktop\NEWUIUX\bin\Debug\net9.0\wwwroot\_framework\MenShopBlazor.2izhnexmpf.pdb
+C:\Users\AlbertBao\Desktop\NEWUIUX\bin\Debug\net9.0\wwwroot\_framework\MenShopBlazor.f6gdl16gj2.wasm.gz
+C:\Users\AlbertBao\Desktop\NEWUIUX\bin\Debug\net9.0\wwwroot\_framework\MenShopBlazor.2izhnexmpf.pdb.gz
+C:\Users\AlbertBao\Desktop\NEWUIUX\obj\Debug\net9.0\compressed\la06oqj3s7-f6gdl16gj2.gz
+C:\Users\AlbertBao\Desktop\NEWUIUX\obj\Debug\net9.0\compressed\3jlcbpnv3y-2izhnexmpf.gz
+C:\Users\AlbertBao\Desktop\NEWUIUX\obj\Debug\net9.0\compressed\0n6ault2f5-j9g2ltlmee.gz

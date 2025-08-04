@@ -23,6 +23,7 @@ using MenShopBlazor.Services.InputReceiptService;
 using MenShopBlazor.Services.OutputReceiptService;
 using MenShopBlazor.Services.Storage;
 using MenShopBlazor.Services.Collection;
+using MenShopBlazor.Services.DiscountPrice;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
@@ -51,6 +52,7 @@ builder.Services.AddScoped<AuthorizationMessageHandler>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IBranchService, BranchService>();
+builder.Services.AddScoped<IDiscountPriceService, DiscountPriceService>();
 
 builder.Services.AddHttpClient("AuthorizedClient", client =>
 {

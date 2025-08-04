@@ -1,0 +1,173 @@
+﻿@page "/discountprice"
+@using MenShopBlazor.DTOs.DiscountPrice
+@using MenShopBlazor.Services.DiscountPrice
+@using MenShopBlazor.Shared
+@inject NavigationManager Navigation
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@inject IDiscountPriceService DiscountPriceService
+
+<MudOverlay Visible="_loading" DarkBackground="true" Fixed="true" ZIndex="1300">
+    <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
+</MudOverlay>
+<MudContainer Class="mt-5 px-8" MaxWidth="MaxWidth.False">
+    <MudBreadcrumbs Items="_items"></MudBreadcrumbs>
+    <MudGrid>
+        <MudItem xs="12">
+            <MudText Typo="Typo.h5" Class="mb-4">DANH SÁCH GIẢM GIÁ</MudText>
+            
+            @if (!_loading)
+            {
+                <MudDataGrid T="DiscountPriceViewModel"
+                             Items="@discountPriceViewModels"
+                             RowsPerPage="7"
+                             Dense="true"
+                             Filterable="true"
+                             FilterMode="DataGridFilterMode.ColumnFilterRow">
+                    <Columns>
+                        <PropertyColumn Property="x => x.Id" Filterable=false Title="Mã Chương Trình" />
+                        <PropertyColumn Property="x => x.Name" Title="Tên Chương Trình" />
+                        <PropertyColumn Property="x => x.DiscountPercent" Filterable=false Title="Tỷ lệ giảm giá" />
+                        <PropertyColumn Property="x => x.StartTime" Title="Ngày Tạo" />
+                        <PropertyColumn Property="x => x.EndTime" Title="Ngày Kết Thúc" />
+                        <TemplateColumn Title="TÙY CHỈNH" TextAlign="DataGridColumnAlign.Right">
+                            <CellTemplate>
+                                <MudStack Row>
+                                    <MudButton StartIcon="@Icons.Material.Outlined.Edit"
+                                               Size="Size.Small"
+                                               Color="Color.Primary"
+                                               OnClick="@(() => OpenEditDialog(context.Item))">
+                                        Sửa
+                                    </MudButton>
+                                    <MudButton StartIcon="@Icons.Material.Outlined.Delete"
+                                               Size="Size.Small"
+                                               Color="Color.Error"
+                                               Class="ml-2"
+                                               OnClick="@(() => DeleteColorAsync(context.Item.Id))">
+                                        Xoá
+                                    </MudButton>
+                                    <MudButton StartIcon="@Icons.Material.Filled.DataSaverOn"
+                                               Size="Size.Small"
+                                               Color="Color.Tertiary"
+                                               Class="ml-2"
+                                               OnClick="@(() => GoToDetailPage(context.Item.Id))">
+                                        Chi tiết
+                                    </MudButton>
+
+                                </MudStack>
+                            </CellTemplate>
+                        </TemplateColumn>
+                    </Columns>
+
+                    <PagerContent>
+                        <MudDataGridPager T="DiscountPriceViewModel" />
+                    </PagerContent>
+                </MudDataGrid>
+            
+            }
+            <MudButton Color="Color.Primary" Variant="Variant.Outlined"
+                       OnClick="OpenCreateDialog" StartIcon="@Icons.Material.Filled.Add" Class="mt-2 mb-3">
+                Thêm sản phẩm
+            </MudButton>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+@code {
+    private List<DiscountPriceViewModel> discountPriceViewModels = new();
+    private List<BreadcrumbItem> _items = new();
+    private bool _loading = false;
+    protected override async Task OnInitializedAsync()
+    {
+        _items = new()
+        {
+            new BreadcrumbItem("Trang chủ", href: "/", icon: Icons.Material.Filled.Home),
+            new BreadcrumbItem("Giảm giá", href: null, disabled: true, icon: Icons.Material.Filled.List),
+        };
+        await loadpage();
+    }
+    private async Task loadpage()
+    {
+        _loading = true;
+        StateHasChanged();
+
+        try
+        {
+            var result = await DiscountPriceService.GetAllDiscountPrice();
+            if (result == null || !result.Any())
+            {
+                Console.WriteLine("Không nhận được dữ liệu hoặc danh sách rỗng.");
+            }
+            else
+            {
+                Console.WriteLine($"Số lượng Giảm Giá: {result.Count}");
+            }
+
+            discountPriceViewModels = result ?? new();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Lỗi khi tải dữ liệu: " + ex.Message);
+            discountPriceViewModels = new();
+        }
+
+        _loading = false;
+        StateHasChanged();
+    }
+    private async Task DeleteColorAsync(int id)
+    {
+        var parameters = new DialogParameters
+        {
+            { "ContentText", $"Bạn có chắc muốn xoá khuyễn mãi có ID = {id} không?" },
+            { "ButtonText", "Xoá" },
+            { "Color", Color.Error }
+        };
+
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
+        var dialog = DialogService.Show<ConfirmDeleteDialog>("Xác nhận xoá", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            var response = await DiscountPriceService.DeleteDiscountPriceAsync(id);
+
+            if (response.IsSuccess)
+            {
+                Snackbar.Add("Xóa khuyễn mãi thành công", Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add(response.Message, Severity.Error);
+            }
+
+            await loadpage();
+        }
+    }
+    private void GoToDetailPage(int id)
+    {
+        Navigation.NavigateTo($"/discount-price-detail/{id}");
+    }
+    private async Task OpenCreateDialog()
+    {
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = DialogService.Show<CreateDiscountPrice>("TẠO GIẢM GIÁ", options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await loadpage();
+        }
+    }
+    private async Task OpenEditDialog(DiscountPriceViewModel collectionDTO)
+    {
+        var parameters = new DialogParameters { ["collectionDTO"] = collectionDTO };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+
+        var dialog = DialogService.Show<UpdateDiscountPrice>("CHỈNH SỬA GIẢM GIÁ", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await loadpage();
+        }
+    }
+}

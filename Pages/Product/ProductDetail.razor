@@ -1,6 +1,7 @@
 ﻿@page "/product-detail-admin/{productId:int}"
 
 
+@using MenShopBlazor.Pages.DiscountPrice
 @using MenShopBlazor.Services.Product
 @using MenShopBlazor.DTOs.Product.ViewModel
 @using MenShopBlazor.Shared;
@@ -100,6 +101,12 @@
                                            Class="ml-2"
                                            OnClick="@(() => DeleteDetailProduct(context.Item.DetailId))">
                                     Xoá
+                                </MudButton>
+                                    <MudButton StartIcon="@Icons.Material.Filled.Discount"
+                                            Size="Size.Small"
+                                            Color="Color.Warning"
+                                            OnClick="@(() => OpenPriceDialog(context.Item.DetailId))">
+                                    Giảm Giá
                                 </MudButton>
                             </MudStack>
                         </CellTemplate>
@@ -237,5 +244,19 @@
             await LoadProductDetailsAsync();
         }
     }
+    private async Task OpenPriceDialog(int detailId)
+    {
+        var parameters = new DialogParameters { { "detailId", detailId } };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+        var dialog = DialogService.Show<CreateDiscountPriceDetail>("THÊM GIẢM GIÁ", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await LoadProductDetailsAsync();
+        }
+    }
+
+
 }
 

@@ -1,7 +1,7 @@
 {
   "mainAssemblyName": "MenShopBlazor",
   "resources": {
-    "hash": "sha256-4tPOXyGKxyvlFzoz4oX2uJqM3WqIPE57h3rS1ozJj+8=",
+    "hash": "sha256-3taKZF7eAFC3u++lAe6g4mTcAZACiih/yXmGulutCHU=",
     "fingerprinting": {
       "Blazored.SessionStorage.34xr2ein7y.wasm": "Blazored.SessionStorage.wasm",
       "Microsoft.AspNetCore.Authorization.phaa9r44xv.wasm": "Microsoft.AspNetCore.Authorization.wasm",
@@ -219,8 +219,8 @@
       "icudt_CJK.tjcz0u77k5.dat": "icudt_CJK.dat",
       "icudt_EFIGS.tptq2av103.dat": "icudt_EFIGS.dat",
       "icudt_no_CJK.lfu7j35m59.dat": "icudt_no_CJK.dat",
-      "MenShopBlazor.46ijrwpc9k.wasm": "MenShopBlazor.wasm",
-      "MenShopBlazor.o3ac5v9z4m.pdb": "MenShopBlazor.pdb"
+      "MenShopBlazor.f6gdl16gj2.wasm": "MenShopBlazor.wasm",
+      "MenShopBlazor.2izhnexmpf.pdb": "MenShopBlazor.pdb"
     },
     "jsModuleNative": {
       "dotnet.native.st0ovrfdhi.js": "sha256-MBW/zayfv+YU6mhH7y4b8NNU4D1EYd7nf9gYrFshnnY="
@@ -448,10 +448,10 @@
       "WindowsBase.pg3o6xzigg.wasm": "sha256-dz62CHynC+zqTkbMOf3vm7YAhiRA8/pIoAwuqHfBL5M=",
       "mscorlib.jl2pswegra.wasm": "sha256-mSoCIDTdCQKTipW8VmFCypW/4AopZauaYRa8LoZdHvY=",
       "netstandard.uriri6ambh.wasm": "sha256-yuH/cvPd6r8N9nfPWihyckFD7hPFP+VQtQQxEqi7HIQ=",
-      "MenShopBlazor.46ijrwpc9k.wasm": "sha256-RBKdrEFqPb/vN3XS74mkRkugO1FMzQz6+NxCe4rUWhE="
+      "MenShopBlazor.f6gdl16gj2.wasm": "sha256-2TNYVftoiXXBo+o5P2S3+BiBo7CliegBaGaiG0Z/4mk="
     },
     "pdb": {
-      "MenShopBlazor.o3ac5v9z4m.pdb": "sha256-3PCWqieX+df9Bx68+WhJ4BSdoJ5boiJifAMdM6xsd60="
+      "MenShopBlazor.2izhnexmpf.pdb": "sha256-BjNho9uWXayq1Sye7zsdxXMK7NFQBzngb2OK/Sw9rNE="
     }
   },
   "cacheBootResources": true,

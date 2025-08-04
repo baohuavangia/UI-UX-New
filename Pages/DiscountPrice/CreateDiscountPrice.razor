@@ -1,34 +1,36 @@
 ﻿@using MenShopBlazor.DTOs.Collection
+@using MenShopBlazor.DTOs.DiscountPrice
 @using MenShopBlazor.Services.Collection
-@inject ICollectionService CollectionService
+@using MenShopBlazor.Services.DiscountPrice
+@inject IDiscountPriceService DiscountPriceService
 @inject ISnackbar Snackbar
 <MudDialog>
     <DialogContent>
         <MudText>
-            Tạo bộ sưu tập
+            Tạo bộ Giảm giá
         </MudText>
-        <MudTextField @bind-Value="collectionDTO.CollectionName"
-                      Label="Tên Bộ Sưu Tập"
+        <MudTextField @bind-Value="createDiscountPrice.Name"
+                      Label="Chương trình giảm giá"
                       Required="true"
                       Immediate="true"
-                      For="@(() => collectionDTO.CollectionName)"
+                      For="@(() => createDiscountPrice.Name)"
                       Margin="Margin.Dense"
                       Variant="Variant.Outlined" />
-        <MudTextField @bind-Value="collectionDTO.Description"
-                      Label="Mô Tả"
+        <MudTextField @bind-Value="createDiscountPrice.DiscountPercent"
+                      Label="Tỷ lệ giảm giá"
                       Required="true"
                       Immediate="true"
-                      For="@(() => collectionDTO.Description)"
+                      For="@(() => createDiscountPrice.DiscountPercent)"
                       Margin="Margin.Dense"
                       Variant="Variant.Outlined" />
-        <MudDatePicker @bind-Date="collectionDTO.StartTime"
+        <MudDatePicker @bind-Date="createDiscountPrice.StartTime"
                        Label="Ngày bắt đầu"
                        DateFormat="dd-MM-yyyy"
                        Required="true"
                        Margin="Margin.Dense"
                        Variant="Variant.Outlined" />
 
-        <MudDatePicker @bind-Date="collectionDTO.EndTime"
+        <MudDatePicker @bind-Date="createDiscountPrice.EndTime"
                        Label="Ngày kết thúc"
                        DateFormat="dd-MM-yyyy"
                        Required="true"
@@ -42,64 +44,64 @@
 </MudDialog>
 @code {
     [CascadingParameter] private IMudDialogInstance MudDialog { get; set; }
-    private List<CollectionDTO> collectionDTOs = new(); // đảm bảo không null
-    private CreateCollectionDTO collectionDTO = new();
+    private List<DiscountPriceViewModel> discountPriceViewModels = new(); // đảm bảo không null
+    private CreateDiscountPriceDTO createDiscountPrice = new();
     protected override async Task OnInitializedAsync()
     {
-        collectionDTO.Status = true;
+
     }
     private async Task loadpage()
     {
         try
         {
-            var result = await CollectionService.GetAllCollection();
+            var result = await DiscountPriceService.GetAllDiscountPrice();
             if (result == null || !result.Any())
             {
                 Console.WriteLine("Không nhận được dữ liệu hoặc danh sách rỗng.");
             }
             else
             {
-                Console.WriteLine($"Số lượng Collection: {result.Count}");
+                Console.WriteLine($"Số lượng Giảm Giá: {result.Count}");
             }
 
-            collectionDTOs = result ?? new();
+            discountPriceViewModels = result ?? new();
         }
         catch (Exception ex)
         {
             Console.WriteLine("Lỗi khi tải dữ liệu: " + ex.Message);
-            collectionDTOs = new(); 
+            discountPriceViewModels = new();
         }
 
 
     }
     private async Task CreateProductAsync()
     {
-        if (string.IsNullOrWhiteSpace(collectionDTO.CollectionName))
+        if (string.IsNullOrWhiteSpace(createDiscountPrice.Name))
         {
-            Snackbar.Add("Tên bộ sưu tập không được để trống", Severity.Warning);
+            Snackbar.Add("Chương trình giảm giá không được để trống", Severity.Warning);
             return;
         }
-        if (string.IsNullOrWhiteSpace(collectionDTO.Description))
+        if (createDiscountPrice.DiscountPercent == null)
         {
-            Snackbar.Add("Mô tả không được để trống", Severity.Warning);
+            Snackbar.Add("Tỷ lệ giảm giá không được để trống", Severity.Warning);
             return;
         }
-        if (collectionDTO.EndTime < collectionDTO.StartTime)
+        if (createDiscountPrice.EndTime < createDiscountPrice.StartTime)
         {
             Snackbar.Add("Ngày kết thúc không được trước ngày bắt đầu", Severity.Error);
             return;
         }
 
-        var response = await CollectionService.AddCollection(collectionDTO);
-        if (response.IsSuccess)
+        var response = await DiscountPriceService.CreateDiscountPrice(createDiscountPrice);
+        if (response != null)
         {
-            Snackbar.Add($"{response.Message}", Severity.Success);
+            Snackbar.Add($"Đã tạo chương trình thành công {response.Message}", Severity.Success);
             MudDialog.Close(DialogResult.Ok(true));
             loadpage();
         }
         else
         {
-            Snackbar.Add($"{response.Message}", Severity.Error);
+            Snackbar.Add($"Tạo chương trình thất bại {response.Message}", Severity.Error);
         }
     }
     private void Cancel()

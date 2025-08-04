@@ -1,0 +1,167 @@
+﻿@using MenShopBlazor.DTOs.DiscountPrice
+@using MenShopBlazor.Services.DiscountPrice
+@using MenShopBlazor.Shared
+@inject IDiscountPriceService DiscountPriceService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<MudDialog>
+    <DialogContent>
+        <MudText Typo="Typo.h6">Áp dụng khuyến mãi cho sản phẩm</MudText>
+
+        <MudPaper Class="pa-4 mt-2">
+            <MudAutocomplete T="DiscountPriceViewModel"
+                             Label="Chọn khuyến mãi"
+                             @bind-Value="selectedDiscount"
+                             ToStringFunc="@(d => d?.Name)"
+                             SearchFunc="SearchDiscountsAutocomplete"
+                             Required="true"
+                             Class="mt-3" />
+
+            <MudButton Color="Color.Primary"
+                       Variant="Variant.Filled"
+                       OnClick="AddDiscountDetail"
+                       Disabled="@(selectedDiscount == null || DiscountPrices != null)"
+                       Class="mt-4">
+                Thêm giảm giá
+            </MudButton>
+        </MudPaper>
+
+        @if (DiscountPrices != null)
+        {
+            <MudAlert Severity="Severity.Info" Variant="Variant.Filled" Dense="true" Class="mt-3">
+                <MudGrid>
+                    <MudItem xs="12" sm="9">
+                        <MudText Typo="Typo.subtitle2">
+                            Sản phẩm này đã được áp dụng khuyến mãi: <b>@DiscountPrices.Name</b>
+                        </MudText>
+                        <MudText Typo="Typo.body2">
+                            Giảm: @DiscountPrices.DiscountPercent% |
+                            Từ @DiscountPrices.StartTime đến @DiscountPrices.EndTime
+                        </MudText>
+                    </MudItem>
+                    <MudItem xs="12" sm="3" Class="align-content-center d-flex justify-content-center">
+                        <MudButton StartIcon="@Icons.Material.Outlined.Delete"
+                                   Size="Size.Small"
+                                   Color="Color.Error"
+                                   OnClick="@(() => DeleteColorAsync(existingDiscountDetail.Id))"
+                                   >
+                            <b>Xoá</b>
+                        </MudButton>
+                    </MudItem>
+                </MudGrid>
+            </MudAlert>
+        }
+
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton OnClick="Cancel">Đóng</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; }
+    [Parameter] public int detailId { get; set; }
+
+    private DiscountPriceViewModel selectedDiscount;
+    private List<DiscountPriceViewModel> allDiscountPrices = new();
+    private DiscountPriceViewModel DiscountPrices;
+    private DiscountPriceDetailViewModel existingDiscountDetail;
+
+    protected override async Task OnInitializedAsync()
+    {
+        allDiscountPrices = await DiscountPriceService.GetAllDiscountPrice();
+
+        // Kiểm tra nếu chi tiết sản phẩm đã có khuyến mãi
+        existingDiscountDetail = await DiscountPriceService.GetDiscountPriceDetailById(detailId);
+        if (existingDiscountDetail != null && existingDiscountDetail.discountPriceId > 0)
+        {
+            DiscountPrices = await DiscountPriceService.GetDiscountPriceById(existingDiscountDetail.discountPriceId);
+        }
+    }
+
+    private Task<IEnumerable<DiscountPriceViewModel>> SearchDiscountsAutocomplete(string value, CancellationToken token)
+    {
+        var result = string.IsNullOrWhiteSpace(value)
+            ? allDiscountPrices
+            : allDiscountPrices.Where(x => x.Name.Contains(value, StringComparison.OrdinalIgnoreCase));
+
+        return Task.FromResult(result);
+    }
+
+    private async Task AddDiscountDetail()
+    {
+        if (existingDiscountDetail != null && existingDiscountDetail.discountPriceId > 0)
+        {
+            Snackbar.Add("❌ Sản phẩm này đã có chương trình khuyến mãi!", Severity.Error);
+            return;
+        }
+
+        if (selectedDiscount == null)
+        {
+            Snackbar.Add("⚠ Vui lòng chọn khuyến mãi", Severity.Warning);
+            return;
+        }
+
+        var dto = new CreateDiscountPriceDetailDTO
+        {
+            discountPriceId = selectedDiscount.Id,
+            productDetailIds = new List<int> { detailId }
+        };
+
+        var result = await DiscountPriceService.CreateDiscountPriceDetail(dto);
+
+        if (result != null)
+        {
+            Snackbar.Add("✔ Áp dụng khuyến mãi thành công", Severity.Success);
+
+            // Cập nhật lại hiển thị
+            existingDiscountDetail = await DiscountPriceService.GetDiscountPriceDetailById(detailId);
+            if (existingDiscountDetail != null && existingDiscountDetail.discountPriceId > 0)
+            {
+                DiscountPrices = await DiscountPriceService.GetDiscountPriceById(existingDiscountDetail.discountPriceId);
+            }
+
+            selectedDiscount = null;
+        }
+        else
+        {
+            Snackbar.Add("✘ Áp dụng thất bại hoặc đã tồn tại", Severity.Error);
+        }
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+    private async Task DeleteColorAsync(int id)
+    {
+        var parameters = new DialogParameters
+        {
+            { "ContentText", $"Bạn có chắc muốn xoá khuyến mãi có ID = {id} không?" },
+            { "ButtonText", "Xoá" },
+            { "Color", Color.Error }
+        };
+
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall };
+        var dialog = DialogService.Show<ConfirmDeleteDialog>("Xác nhận xoá", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            var response = await DiscountPriceService.DeleteDiscountPriceDetailAsync(id);
+
+            if (response.IsSuccess)
+            {
+                Snackbar.Add("Xóa khuyến mãi thành công", Severity.Success);
+                MudDialog.Close(DialogResult.Ok(true));
+            }
+            else
+            {
+                Snackbar.Add(response.Message, Severity.Error);
+            }
+
+        }
+    }
+}
